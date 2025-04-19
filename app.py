@@ -1,16 +1,23 @@
-from flask import Flask, request, send_file, jsonify, render_template, url_for
-from jinja2 import Environment, FileSystemLoader
+import os
+import uuid
+import json
 import pdfkit
 import qrcode
 import io
-import os
-import uuid
 import base64
 from io import BytesIO
-import json
+from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify
+from werkzeug.utils import secure_filename
+from supabase_client import supabase_client
 
 app = Flask(__name__)
-env = Environment(loader=FileSystemLoader('templates'))
+app.secret_key = 'your_secret_key_here'  # Для работы с сессиями
+
+# Директории для сохранения файлов
+STATIC_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+if not os.path.exists(STATIC_FOLDER):
+    os.makedirs(STATIC_FOLDER)
 
 # Явно указываем путь к wkhtmltopdf
 wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
@@ -67,7 +74,7 @@ def generate_pdf_with_wkhtmltopdf(html_content, document_id):
     # Генерация PDF в виде байтов
     try:
         pdf_bytes = pdfkit.from_string(html_content, False, options=pdf_options, configuration=config)
-        pdf_path = f"static/document_{document_id}.pdf"
+        pdf_path = os.path.join(STATIC_FOLDER, f"document_{document_id}.pdf")
         with open(pdf_path, 'wb') as f:
             f.write(pdf_bytes)
         print(f"[PDF Debug] PDF успешно создан с помощью wkhtmltopdf: {pdf_path}")
@@ -107,12 +114,12 @@ def generate_pdf_fallback(html_content, document_id):
 </html>"""
         
         # Сохраняем HTML файл как запасной вариант для PDF
-        html_path = f"static/document_{document_id}.html"
+        html_path = os.path.join(STATIC_FOLDER, f"document_{document_id}.html")
         with open(html_path, 'w', encoding='utf-8') as f:
             f.write(enhanced_html)
         
         # Сохраняем пустой PDF файл с указанием, что нужно использовать HTML
-        pdf_path = f"static/document_{document_id}.pdf"
+        pdf_path = os.path.join(STATIC_FOLDER, f"document_{document_id}.pdf")
         with open(pdf_path, 'w', encoding='utf-8') as f:
             f.write(f"PDF generation failed. Please use HTML version: {html_path}")
         
@@ -126,202 +133,450 @@ def generate_pdf_fallback(html_content, document_id):
 
 @app.route('/')
 def index():
-    # Пример JSON для отображения в форме
-    example_json = {
-        "template": "act.html",
-        "document_number": "ACT-001",
-        "date": "2025-04-19",
-        "wastes": [
-            {"name": "Ртутьсодержащие лампы", "hazard_class": "I", "quantity": 10},
-            {"name": "Аккумуляторы", "hazard_class": "II", "quantity": 50}
-        ],
-        "responsible_person": "Иванов И.И."
+    """Главная страница"""
+    return render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Страница входа и регистрации"""
+    if request.method == 'POST':
+        # Проверяем, в каком формате пришли данные
+        if request.is_json:
+            data = request.get_json()
+            email = data.get('email')
+            password = data.get('password')
+            next_url = data.get('next', '/')
+        else:
+            email = request.form.get('email')
+            password = request.form.get('password')
+            next_url = request.form.get('next', '/')
+        
+        if not email or not password:
+            if request.is_json:
+                return jsonify({'error': 'Пожалуйста, введите email и пароль'})
+            flash('Пожалуйста, введите email и пароль', 'error')
+            return redirect(url_for('login', next=next_url))
+        
+        # Аутентификация пользователя через Supabase
+        result = supabase_client.authenticate_user(email, password)
+        
+        if result.get('error'):
+            if request.is_json:
+                return jsonify({'error': result['error']})
+            flash(result['error'], 'error')
+            return redirect(url_for('login', next=next_url))
+        
+        # Сохраняем пользователя в сессии
+        user_data = result['user']
+        session['user'] = {
+            'id': user_data['id'],
+            'name': user_data['name'],
+            'email': user_data['email'],
+            'avatar': user_data.get('avatar_url')
+        }
+        
+        if request.is_json:
+            return jsonify({'success': True, 'redirect': next_url})
+        return redirect(next_url)
+    
+    # Для GET запроса показываем форму
+    next_url = request.args.get('next', '/')
+    return render_template('login.html', next=next_url)
+
+@app.route('/register', methods=['POST'])
+def register():
+    """Обработка регистрации пользователя"""
+    # Проверяем, в каком формате пришли данные
+    if request.is_json:
+        data = request.get_json()
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+    else:
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+    
+    # Проверка входных данных
+    if not all([name, email, password, confirm_password]):
+        if request.is_json:
+            return jsonify({'error': 'Пожалуйста, заполните все поля'})
+        flash('Пожалуйста, заполните все поля', 'error')
+        return redirect(url_for('login'))
+    
+    if password != confirm_password:
+        if request.is_json:
+            return jsonify({'error': 'Пароли не совпадают'})
+        flash('Пароли не совпадают', 'error')
+        return redirect(url_for('login'))
+    
+    if len(password) < 8:
+        if request.is_json:
+            return jsonify({'error': 'Пароль должен содержать не менее 8 символов'})
+        flash('Пароль должен содержать не менее 8 символов', 'error')
+        return redirect(url_for('login'))
+    
+    # Регистрация пользователя в Supabase
+    result = supabase_client.create_user(email, name, password)
+    
+    if result.get('error'):
+        if request.is_json:
+            return jsonify({'error': result['error']})
+        flash(result['error'], 'error')
+        return redirect(url_for('login'))
+    
+    # Автоматически входим пользователя после регистрации
+    user_data = result['user']
+    session['user'] = {
+        'id': user_data['id'],
+        'name': user_data['name'],
+        'email': user_data['email'],
+        'avatar': user_data.get('avatar_url')
     }
-    return render_template('index.html', example_json=example_json)
+    
+    if request.is_json:
+        return jsonify({'success': True, 'redirect': '/'})
+    flash('Регистрация успешна!', 'success')
+    return redirect(url_for('index'))
 
+@app.route('/logout')
+def logout():
+    """Выход из системы"""
+    session.pop('user', None)
+    flash('Вы успешно вышли из системы', 'success')
+    return redirect(url_for('index'))
 
-@app.route('/generate', methods=['POST'])
+@app.route('/generate', methods=['GET', 'POST'])
 def generate():
-    json_input = request.form.get('json_input', '').strip()
+    """
+    Генерирует PDF документ на основе предоставленных данных.
+    """
+    # Проверка авторизации
+    if not session.get('user'):
+        if request.method == 'POST':
+            # Если пришел POST-запрос, сохраняем данные в сессии и перенаправляем на логин
+            if request.form.get('json_input'):
+                session['pending_json_data'] = request.form.get('json_input')
+            return redirect(url_for('login', next='/generate'))
+        return redirect(url_for('login', next=request.path))
+    
+    error = None
+    
+    if request.method == 'POST':
+        try:
+            # Получаем JSON данные из формы
+            json_input = request.form.get('json_input', session.pop('pending_json_data', ''))
+            
+            # Если JSON пуст, выдаем ошибку
+            if not json_input.strip():
+                error = "Пожалуйста, предоставьте данные в формате JSON"
+                return render_template('result.html', error=error)
+            
+            # Парсим JSON
+            try:
+                data = json.loads(json_input)
+            except json.JSONDecodeError as e:
+                error = f"Недопустимый формат JSON: {str(e)}"
+                return render_template('result.html', error=error)
+            
+            # Генерируем уникальный ID документа
+            document_id = str(uuid.uuid4())
+            
+            # Добавляем QR-код в данные
+            data['qr_code'] = generate_qr_code(document_id)
+            data['document_id'] = document_id
+            
+            # Генерируем HTML из шаблона
+            try:
+                html_content = render_template('universal.html', **data)
+            except Exception as e:
+                error = f"Ошибка при рендеринге шаблона: {str(e)}"
+                return render_template('result.html', error=error)
+            
+            # Создаем PDF с использованием соответствующего метода
+            try:
+                if pdf_renderer == "wkhtmltopdf" and os.path.exists(wkhtmltopdf_path):
+                    pdf_bytes, file_path = generate_pdf_with_wkhtmltopdf(html_content, document_id)
+                else:
+                    pdf_bytes, file_path = generate_pdf_fallback(html_content, document_id)
+            except Exception as e:
+                error = f"Ошибка при создании PDF: {str(e)}"
+                return render_template('result.html', error=error)
+            
+            # Получаем метаданные документа
+            try:
+                file_size_kb = round(os.path.getsize(file_path) / 1024, 2)
+            except:
+                file_size_kb = 0
+                
+            document_meta = {
+                'template_type': data.get('operation_type', 'документ'),
+                'created_at': datetime.now().strftime('%d.%m.%Y %H:%M'),
+                'size_kb': file_size_kb,
+                'number': data.get('document_number', 'б/н'),
+                'pages': 1  # В будущем можно добавить подсчет страниц PDF
+            }
+            
+            # Формируем URL для доступа к PDF
+            pdf_url = url_for('static', filename=f'document_{document_id}.pdf')
+            
+            # Сохраняем информацию о документе в Supabase
+            user_id = session['user']['id']
+            document_data = {
+                'document_name': f"{document_meta['template_type']} {document_meta['number']}",
+                'document_number': document_meta['number'],
+                'operation_type': document_meta['template_type'],
+                'file_path': file_path,
+                'file_size_kb': file_size_kb,
+                'pages': document_meta['pages'],
+                'json_data': data
+            }
+            
+            supabase_client.save_document(user_id, document_data)
+            
+            # Отображаем результаты
+            return render_template('result.html', 
+                                  pdf_url=pdf_url, 
+                                  document_id=document_id,
+                                  document_meta=document_meta)
+            
+        except Exception as e:
+            error = f"Произошла ошибка: {str(e)}"
+            return render_template('result.html', error=error)
+    
+    # Для GET запроса показываем форму
+    return render_template('index.html')
 
-    # Проверяем, пустой ли JSON
-    if not json_input:
-        return render_template('result.html', error="JSON не может быть пустым. Пожалуйста, введите корректный JSON.")
+@app.route('/templates')
+def templates():
+    """Страница с шаблонами документов"""
+    if not session.get('user'):
+        return redirect(url_for('login', next=request.path))
+    return render_template('templates.html')
 
+@app.route('/documents')
+def documents():
+    """Страница с документами пользователя"""
+    if not session.get('user'):
+        return redirect(url_for('login', next=request.path))
+    
+    user_id = session['user']['id']
+    user_documents = supabase_client.get_user_documents(user_id)
+    
+    return render_template('documents.html', documents=user_documents)
+
+@app.route('/profile')
+def profile():
+    """Страница профиля пользователя"""
+    if not session.get('user'):
+        return redirect(url_for('login', next=request.path))
+    
+    user_id = session['user']['id']
+    user_data = supabase_client.get_user_by_id(user_id)
+    
+    if not user_data:
+        flash('Произошла ошибка при загрузке данных профиля', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('profile.html', user=user_data)
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    """Обновление профиля пользователя"""
+    if not session.get('user'):
+        return redirect(url_for('login'))
+    
+    user_id = session['user']['id']
+    name = request.form.get('name')
+    
+    update_data = {'name': name}
+    
+    # Обработка аватара, если загружен
+    if 'avatar' in request.files:
+        avatar_file = request.files['avatar']
+        if avatar_file and avatar_file.filename:
+            # Здесь можно добавить загрузку файла в хранилище и получение URL
+            # Для примера просто сохраняем локально
+            avatar_filename = f"avatar_{user_id}_{secure_filename(avatar_file.filename)}"
+            avatar_path = os.path.join(STATIC_FOLDER, avatar_filename)
+            avatar_file.save(avatar_path)
+            avatar_url = url_for('static', filename=avatar_filename)
+            update_data['avatar_url'] = avatar_url
+    
+    result = supabase_client.update_user_profile(user_id, update_data)
+    
+    if result.get('error'):
+        flash(result['error'], 'error')
+    else:
+        flash('Профиль успешно обновлен', 'success')
+        # Обновляем данные в сессии
+        session['user']['name'] = name
+        if 'avatar_url' in update_data:
+            session['user']['avatar'] = update_data['avatar_url']
+    
+    return redirect(url_for('profile'))
+
+@app.route('/settings')
+def settings():
+    """Страница настроек пользователя"""
+    if not session.get('user'):
+        return redirect(url_for('login', next=request.path))
+    return render_template('settings.html')
+
+@app.route('/help')
+def help_page():
+    """Страница помощи"""
+    return render_template('help.html')
+
+# API маршруты
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """API для входа в систему"""
+    email = request.form.get('email')
+    password = request.form.get('password')
+    
+    if not email or not password:
+        return jsonify({'success': False, 'error': 'Не указан email или пароль'})
+    
+    result = supabase_client.authenticate_user(email, password)
+    
+    if result.get('error'):
+        return jsonify({'success': False, 'error': result['error']})
+    
+    # Сохраняем пользователя в сессии
+    user_data = result['user']
+    session['user'] = {
+        'id': user_data['id'],
+        'name': user_data['name'],
+        'email': user_data['email'],
+        'avatar': user_data.get('avatar_url')
+    }
+    
+    return jsonify({'success': True, 'redirect': request.form.get('next', '/')})
+
+@app.route('/api/profile', methods=['GET'])
+def api_profile():
+    """API для получения данных профиля"""
+    if not session.get('user'):
+        return jsonify({'success': False, 'error': 'Требуется авторизация'})
+    
+    user_id = session['user']['id']
+    user_data = supabase_client.get_user_by_id(user_id)
+    
+    if not user_data:
+        return jsonify({'success': False, 'error': 'Пользователь не найден'})
+    
+    # Не возвращаем хеш пароля
+    if 'password_hash' in user_data:
+        del user_data['password_hash']
+    
+    return jsonify({'success': True, 'user': user_data})
+
+@app.route('/api/documents', methods=['GET'])
+def api_documents():
+    """API для получения документов пользователя"""
+    if not session.get('user'):
+        return jsonify({'success': False, 'error': 'Требуется авторизация'})
+    
+    user_id = session['user']['id']
+    user_documents = supabase_client.get_user_documents(user_id)
+    
+    return jsonify({'success': True, 'documents': user_documents})
+
+# Маршрут для работы с примерами JSON
+@app.route('/examples/<example_name>')
+def get_example(example_name):
+    """Возвращает пример JSON по имени"""
     try:
-        # Парсим JSON из формы
-        data = json.loads(json_input)
-    except json.JSONDecodeError as e:
-        return render_template('result.html', error=f"Ошибка в JSON: {str(e)}")
+        example_path = os.path.join('examples', f'{example_name}.json')
+        with open(example_path, 'r', encoding='utf-8') as f:
+            example_data = f.read()
+        return jsonify({'success': True, 'data': example_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
-    template_name = data.get('template', 'act.html')
-    if template_name not in ['act.html', 'request.html']:
-        return render_template('result.html', error="Неверное имя шаблона. Используйте 'act.html' или 'request.html'.")
-
-    document_id = str(uuid.uuid4())
-
-    # Подробное логирование для отладки
-    print(f"[PDF Debug] JSON input: {json_input}")
-    print(f"[PDF Debug] Template: {template_name}")
-    print(f"[PDF Debug] Document ID: {document_id}")
-    print(f"[PDF Debug] Current working directory: {os.getcwd()}")
-    print(f"[PDF Debug] Templates directory exists: {os.path.exists('templates')}")
-    print(f"[PDF Debug] Template file exists: {os.path.exists(os.path.join('templates', template_name))}")
-    print(f"[PDF Debug] Template files in directory: {os.listdir('templates')}")
-    print(f"[PDF Debug] wkhtmltopdf path: {wkhtmltopdf_path}")
-    print(f"[PDF Debug] wkhtmltopdf exists: {os.path.exists(wkhtmltopdf_path)}")
-
-    # Генерация QR-кода в формате base64
-    qr_base64 = generate_qr_code(document_id)
-    print(f"[PDF Debug] QR code generated: {len(qr_base64)} chars")
-    data['qr_code'] = qr_base64
-
+def create_pdf_from_html(html_content, output_path, options=None):
+    """
+    Создает PDF файл из HTML контента.
+    
+    Args:
+        html_content (str): HTML контент для конвертации
+        output_path (str): Путь для сохранения PDF файла
+        options (dict, optional): Опции для конвертации. По умолчанию None.
+        
+    Returns:
+        bool: True если PDF успешно создан, иначе False
+    """
     try:
-        # Проверка входных данных для шаблона
-        print(f"[PDF Debug] Template data keys: {data.keys()}")
+        default_options = {
+            'page-size': 'A4',
+            'margin-top': '20mm',
+            'margin-right': '20mm',
+            'margin-bottom': '20mm',
+            'margin-left': '20mm',
+            'encoding': 'UTF-8',
+            'no-outline': None,
+            'enable-local-file-access': None
+        }
         
-        # Рендеринг шаблона
-        template = env.get_template(template_name)
-        html_content = template.render(**data)
-        
-        # Проверка сгенерированного HTML
-        print(f"[PDF Debug] HTML length: {len(html_content)}")
-        print(f"[PDF Debug] HTML content preview: {html_content[:500]}...")
-        
+        if options:
+            default_options.update(options)
+            
         # Сохраняем HTML во временный файл для отладки
-        debug_html_path = f"static/debug_html_{document_id}.html"
+        debug_html_path = os.path.join(STATIC_FOLDER, f'debug_html_{uuid.uuid4()}.html')
         with open(debug_html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        print(f"[PDF Debug] Debug HTML saved to: {debug_html_path}")
-
-        # Создание статического каталога, если его нет
-        static_dir = os.path.join(os.getcwd(), 'static')
-        os.makedirs(static_dir, exist_ok=True)
         
-        # Генерация PDF в зависимости от доступного рендерера
-        try:
-            if pdf_renderer == "wkhtmltopdf":
-                pdf_bytes, file_path = generate_pdf_with_wkhtmltopdf(html_content, document_id)
-                is_html_fallback = False
-            else:
-                pdf_bytes, file_path = generate_pdf_fallback(html_content, document_id)
-                is_html_fallback = True
-        except Exception as e:
-            print(f"[PDF Debug] Ошибка основного рендерера, переключение на запасной вариант: {str(e)}")
-            pdf_bytes, file_path = generate_pdf_fallback(html_content, document_id)
-            is_html_fallback = True
-            
-        # Генерируем URL для скачивания PDF
-        pdf_url = url_for('static', filename=os.path.basename(file_path))
-        
-        # Создаем base64 версию PDF для встраивания (если это действительно PDF)
-        if not is_html_fallback:
-            pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
-            pdf_data_uri = f"data:application/pdf;base64,{pdf_base64}"
-            print(f"[PDF Debug] PDF base64 length: {len(pdf_base64)}")
+        # Создаем PDF с использованием соответствующего метода
+        if pdf_renderer == "wkhtmltopdf" and os.path.exists(wkhtmltopdf_path):
+            try:
+                # Создаем PDF с использованием wkhtmltopdf
+                pdfkit.from_string(html_content, output_path, options=default_options, configuration=config)
+                return True
+            except Exception as e:
+                print(f"[ERROR] Ошибка при создании PDF с помощью wkhtmltopdf: {str(e)}")
+                # Пробуем запасной метод
+                return create_pdf_fallback(html_content, output_path)
         else:
-            pdf_data_uri = None
-            print(f"[PDF Debug] Using HTML fallback instead of PDF base64")
-
-        # Метаданные о документе для улучшенного отображения
-        document_meta = {
-            "id": document_id,
-            "created_at": data.get('date', ''),
-            "template_type": "акт" if template_name == "act.html" else "заявка",
-            "number": data.get('document_number') or data.get('request_number', ''),
-            "size_kb": round(len(pdf_bytes) / 1024, 1),
-            "pages": 1,  # Примерное количество страниц
-            "is_html_fallback": is_html_fallback  # Флаг, указывающий на использование HTML вместо PDF
-        }
-        print(f"[PDF Debug] Document meta: {document_meta}")
-
-        # Добавляем URL к отладочному HTML в результат
-        debug_html_url = url_for('static', filename=f'debug_html_{document_id}.html')
-        
-        return render_template('result.html', 
-                               pdf_url=pdf_url,
-                               pdf_data_uri=pdf_data_uri,
-                               document_id=document_id, 
-                               document_meta=document_meta,
-                               debug_html_url=debug_html_url,
-                               is_html_fallback=is_html_fallback)
-                               
+            # Используем запасной метод
+            return create_pdf_fallback(html_content, output_path)
     except Exception as e:
-        import traceback
-        error_details = traceback.format_exc()
-        print(f"[PDF Debug] ERROR: {str(e)}")
-        print(f"[PDF Debug] ERROR DETAILS: {error_details}")
-        return render_template('result.html', 
-                               error=f"Ошибка генерации PDF: {str(e)}",
-                               error_details=error_details)
+        print(f"[ERROR] Общая ошибка при создании PDF: {str(e)}")
+        return False
 
-
-@app.route('/generate-pdf', methods=['POST'])
-def generate_pdf():
-    data = request.get_json()
-    if not data:
-        return {"error": "No JSON data provided"}, 400
-
-    template_name = data.get('template', 'act.html')
-    if template_name not in ['act.html', 'request.html']:
-        return {"error": "Invalid template name"}, 400
-
-    document_id = str(uuid.uuid4())
-
-    # Логирование для отладки
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Trying to load template: {template_name}")
-    print(f"Templates directory exists: {os.path.exists('templates')}")
-    print(f"Template file exists: {os.path.exists(os.path.join('templates', template_name))}")
-    print(f"wkhtmltopdf path: {wkhtmltopdf_path}")
-    print(f"wkhtmltopdf exists: {os.path.exists(wkhtmltopdf_path)}")
-
-    # Генерация QR-кода в формате base64
-    qr_base64 = generate_qr_code(document_id)
-    print(f"QR code base64 (first 50 chars): {qr_base64[:50]}")
-    data['qr_code'] = qr_base64
-
+def create_pdf_fallback(html_content, output_path):
+    """
+    Запасной метод создания PDF - сохраняем HTML как файл
+    """
     try:
-        # Рендеринг шаблона
-        template = env.get_template(template_name)
-        html_content = template.render(**data)
-        print(f"Rendered HTML (first 500 chars): {html_content[:500]}")
-
-        # Улучшенные настройки для PDF
-        pdf_options = {
-            'encoding': 'UTF-8',
-            'page-size': 'A4',
-            'margin-top': '10mm',
-            'margin-right': '10mm',
-            'margin-bottom': '10mm',
-            'margin-left': '10mm',
-            'enable-local-file-access': True,
-            'print-media-type': True,
-            'dpi': 300,
-            'javascript-delay': 1000,
-            'no-stop-slow-scripts': True,
-            'image-quality': 100
-        }
-
-        # Генерация PDF в виде байтов
-        pdf_bytes = pdfkit.from_string(html_content, False, options=pdf_options, configuration=config)
-
-        # Запись байтов в BytesIO
-        pdf_io = io.BytesIO(pdf_bytes)
-        pdf_io.seek(0)
-
-        return send_file(
-            pdf_io,
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=f'document_{document_id}.pdf'
-        )
+        # Сохраняем HTML файл в папке static
+        html_path = output_path.replace('.pdf', '.html')
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+            
+        # Создаем пустой PDF файл с сообщением
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write("PDF generation failed. Please use HTML version.")
+            
+        print(f"[INFO] Создан запасной HTML файл: {html_path}")
+        return True
     except Exception as e:
-        print(f"Error: {str(e)}")
-        return {"error": str(e)}, 500
-
+        print(f"[ERROR] Ошибка при создании запасного HTML файла: {str(e)}")
+        return False
 
 if __name__ == '__main__':
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static', exist_ok=True)
+    
+    # Проверка подключения к Supabase
+    print("[INFO] Проверка соединения с Supabase...")
+    try:
+        # Проверка соединения через простой запрос к таблице users
+        version = supabase_client.supabase.table("users").select("*").limit(1).execute()
+        print(f"[INFO] Соединение с Supabase установлено успешно.")
+    except Exception as e:
+        print(f"[ERROR] Ошибка соединения с Supabase: {str(e)}")
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

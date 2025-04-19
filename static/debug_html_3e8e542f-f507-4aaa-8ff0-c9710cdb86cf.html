@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Документ отходов</title>
+    <style>
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Roboto'), local('Roboto-Regular'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxK.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 500;
+            src: local('Roboto Medium'), local('Roboto-Medium'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmEU9fBBc4.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 700;
+            src: local('Roboto Bold'), local('Roboto-Bold'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc4.woff2) format('woff2');
+        }
+        
+        body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            margin: 0;
+            padding: 30px;
+            color: #2a2a4a;
+            line-height: 1.5;
+            font-size: 12pt;
+        }
+        
+        .document {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: white;
+            position: relative;
+        }
+        
+        .document::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: #624deb;
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .document-header { 
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .document-title {
+            font-size: 20pt; 
+            font-weight: 700; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            color: #2a2a4a;
+            text-transform: uppercase;
+        }
+        
+        .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .info-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #624deb;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 400;
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 14pt;
+            font-weight: 500;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #2a2a4a;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0;
+        }
+        
+        thead tr { 
+            background-color: #f7f8fd;
+        }
+        
+        th { 
+            text-align: left; 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            font-weight: 500;
+            color: #624deb;
+        }
+        
+        td { 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fbfbfd;
+        }
+        
+        .additional-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f7f8fd;
+            border-radius: 8px;
+            border-left: 4px solid #624deb;
+        }
+        
+        .signature { 
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .signature-item {
+            flex: 1;
+            max-width: 45%;
+            min-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .signature-line {
+            margin-top: 50px;
+            border-top: 1px solid #2a2a4a;
+            position: relative;
+        }
+        
+        .signature-label {
+            position: absolute;
+            top: 5px;
+            left: 0;
+            font-size: 9pt;
+            color: #777;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+        }
+        
+        .qr-code { 
+            margin-top: 30px; 
+            text-align: right;
+            float: right;
+            width: 100px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100pt;
+            color: rgba(98, 77, 235, 0.03);
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="watermark"></div>
+        
+        <div class="document-header">
+            <div class="document-title">
+                
+                    ДОКУМЕНТ ПО ОБРАЩЕНИЮ С ОТХОДАМИ
+                
+            </div>
+            
+            <div class="document-info">
+                <div class="info-group">
+                    <span class="info-label">Номер документа:</span>
+                    <span class="info-value">ACT-001</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Дата составления:</span>
+                    <span class="info-value">2025-04-19</span>
+                </div>
+                
+                
+            </div>
+        </div>
+        
+        
+        
+        
+        
+        
+        
+        <div class="section-title">Сведения об отходах</div>
+        
+        <table>
+            <thead>
+                <tr>
+                    
+                    <th style="width: 50%">Наименование</th>
+                    <th style="width: 15%">Класс опасности</th>
+                    <th style="width: 15%">Код ФККО</th>
+                    <th style="width: 15%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    
+                    <td>Ртутьсодержащие лампы</td>
+                    <td>I</td>
+                    <td></td>
+                    <td>10</td>
+                </tr>
+                
+                <tr>
+                    
+                    <td>Аккумуляторы</td>
+                    <td>II</td>
+                    <td></td>
+                    <td>50</td>
+                </tr>
+                
+                
+            </tbody>
+        </table>
+        
+        
+        <!-- Дополнительные таблицы, специфичные для типа операции -->
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <div class="signature">
+            <div class="signature-row">
+                
+                <div class="signature-item">
+                    <div class="info-label">Ответственное лицо:</div>
+                    <div class="info-value">Иванов И.И.</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+                
+                
+                
+            </div>
+        </div>
+        
+        
+        
+        
+        <div style="clear: both;"></div>
+        
+        <div class="footer">
+            Документ сгенерирован автоматически • ACT-001 • 2025-04-19
+        </div>
+    </div>
+</body>
+</html> 

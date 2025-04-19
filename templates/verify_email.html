@@ -1,0 +1,200 @@
+{% extends "layout.html" %}
+
+{% block title %}Подтверждение Email{% endblock %}
+
+{% block styles %}
+<style>
+    .verify-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    
+    .verify-icon {
+        font-size: 64px;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+    }
+    
+    .verify-title {
+        font-size: 24px;
+        margin-bottom: 15px;
+        color: var(--dark-color);
+    }
+    
+    .verify-message {
+        margin-bottom: 30px;
+        color: #555;
+        line-height: 1.6;
+    }
+    
+    .verify-email {
+        font-weight: 500;
+        color: var(--primary-color);
+    }
+    
+    .verify-form {
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .verify-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-size: 16px;
+        text-align: center;
+        letter-spacing: 2px;
+    }
+    
+    .verify-input:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(98, 77, 235, 0.1);
+    }
+    
+    .verify-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 12px 25px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+    }
+    
+    .verify-btn:hover {
+        background-color: var(--secondary-color);
+    }
+    
+    .verify-auto {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .verify-auto-title {
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: var(--dark-color);
+    }
+    
+    .verify-loader {
+        width: 100%;
+        height: 4px;
+        background-color: #eee;
+        margin: 15px 0;
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .verify-loader-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0;
+        background-color: var(--primary-color);
+        transition: width 5s ease-in-out;
+    }
+    
+    .success-container {
+        display: none;
+        animation: fadeIn 0.5s ease;
+    }
+    
+    .success-icon {
+        font-size: 64px;
+        color: var(--success-color);
+        margin-bottom: 20px;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-container" id="verify-container">
+    <i class="fas fa-envelope verify-icon"></i>
+    <h1 class="verify-title">Подтвердите ваш email адрес</h1>
+    <p class="verify-message">
+        Мы отправили код подтверждения на <span class="verify-email">{{ email }}</span>.<br>
+        Пожалуйста, введите его ниже для завершения регистрации.
+    </p>
+    
+    <form class="verify-form" id="verify-form">
+        <input type="text" class="verify-input" id="verify-code" placeholder="Введите код" maxlength="6" autocomplete="off">
+        <button type="submit" class="verify-btn">Подтвердить</button>
+    </form>
+    
+    <div class="verify-auto" id="verify-auto">
+        <h3 class="verify-auto-title">Автоматическая проверка</h3>
+        <p>Подождите, система пытается автоматически проверить ваш email...</p>
+        <div class="verify-loader">
+            <div class="verify-loader-bar" id="loader-bar"></div>
+        </div>
+    </div>
+</div>
+
+<div class="verify-container success-container" id="success-container">
+    <i class="fas fa-check-circle success-icon"></i>
+    <h1 class="verify-title">Email успешно подтвержден!</h1>
+    <p class="verify-message">
+        Ваша учетная запись активирована и готова к использованию.<br>
+        Теперь вы можете войти в систему с вашим email и паролем.
+    </p>
+    <a href="/" class="verify-btn">Перейти на главную</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const email = new URLSearchParams(window.location.search).get('email') || 'example@example.com';
+        const verifyEmail = document.querySelector('.verify-email');
+        const verifyForm = document.getElementById('verify-form');
+        const verifyContainer = document.getElementById('verify-container');
+        const successContainer = document.getElementById('success-container');
+        const loaderBar = document.getElementById('loader-bar');
+        
+        // Обновляем отображаемый email
+        if (verifyEmail) {
+            verifyEmail.textContent = email;
+        }
+        
+        // Запускаем анимацию загрузки
+        setTimeout(() => {
+            loaderBar.style.width = '100%';
+        }, 100);
+        
+        // Имитация автоматической проверки через 5 секунд
+        setTimeout(() => {
+            verifyContainer.style.display = 'none';
+            successContainer.style.display = 'block';
+        }, 5000);
+        
+        // Обработка отправки формы
+        if (verifyForm) {
+            verifyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                verifyContainer.style.display = 'none';
+                successContainer.style.display = 'block';
+            });
+        }
+    });
+</script>
+{% endblock %} 

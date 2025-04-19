@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Система управления отходами{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #624deb;
+            --secondary-color: #8075e5;
+            --accent-color: #ff7e5f;
+            --dark-color: #2a2a4a;
+            --light-color: #f7f8fd;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --border-color: #e0e0e0;
+            --transition-speed: 0.3s;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: linear-gradient(135deg, var(--light-color) 0%, #ffffff 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--dark-color);
+            font-weight: 500;
+            font-size: 18px;
+        }
+        
+        .logo i {
+            color: var(--primary-color);
+            margin-right: 10px;
+            font-size: 22px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-link {
+            color: var(--dark-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color var(--transition-speed);
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary-color);
+            background-color: var(--light-color);
+        }
+        
+        .nav-link.active {
+            color: var(--primary-color);
+            background-color: var(--light-color);
+        }
+        
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            text-decoration: none;
+        }
+        
+        .auth-btn i {
+            margin-right: 8px;
+        }
+        
+        .auth-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .user-menu {
+            position: relative;
+        }
+        
+        .user-logged-in {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .user-logged-in i {
+            font-size: 18px;
+        }
+        
+        .user-logged-in .logout {
+            color: var(--error-color);
+            padding: 5px 8px;
+        }
+        
+        .user-logged-in .logout:hover {
+            background-color: #fff2f2;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .footer {
+            background-color: white;
+            border-top: 1px solid var(--border-color);
+            padding: 20px 30px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+            margin-top: 50px;
+        }
+        
+        /* Mini auth popup */
+        .mini-auth {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            padding: 20px;
+            display: none;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .mini-auth-header {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .mini-auth-tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .mini-auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            border-bottom: 2px solid #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .mini-auth-tab.active {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .mini-auth-form {
+            display: none;
+        }
+        
+        .mini-auth-form.active {
+            display: block;
+        }
+        
+        .mini-auth-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .mini-auth-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .mini-auth-footer {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .mini-auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .mini-auth-error {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 15px;
+            }
+            
+            .logo {
+                margin-bottom: 15px;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-bottom: 15px;
+            }
+            
+            .mini-auth {
+                width: 90%;
+                left: 5%;
+                right: 5%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .nav-links {
+                gap: 10px;
+            }
+            
+            .nav-link {
+                padding: 5px;
+                font-size: 14px;
+            }
+            
+            .auth-btn {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <i class="fas fa-recycle"></i>
+            <span>ЭкоДокументы</span>
+        </a>
+        
+        <div class="nav-links">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Главная</a>
+            <a href="/templates" class="nav-link {% if request.path == '/templates' %}active{% endif %}">Шаблоны</a>
+            <a href="/documents" class="nav-link {% if request.path == '/documents' %}active{% endif %}">Мои документы</a>
+            <a href="/help" class="nav-link {% if request.path == '/help' %}active{% endif %}">Помощь</a>
+        </div>
+        
+        {% if session.get('user') %}
+        <div class="user-logged-in">
+            <span>{{ session.user.name }}</span>
+            <i class="fas fa-user-circle"></i>
+            <a href="/logout" class="nav-link logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+        {% else %}
+        <a href="/login" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Войти</a>
+        {% endif %}
+    </nav>
+    
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <footer class="footer">
+        &copy; 2023 ЭкоДокументы. Все права защищены.
+    </footer>
+    
+    {% block scripts %}{% endblock %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Flash messages auto-dismiss
+            const flashMessages = document.querySelectorAll('.flash-message');
+            
+            flashMessages.forEach(function(message) {
+                setTimeout(function() {
+                    message.classList.add('flash-hide');
+                    
+                    message.addEventListener('transitionend', function() {
+                        message.remove();
+                    });
+                }, 5000);
+                
+                const closeBtn = message.querySelector('.flash-close');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', function() {
+                        message.classList.add('flash-hide');
+                        
+                        message.addEventListener('transitionend', function() {
+                            message.remove();
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

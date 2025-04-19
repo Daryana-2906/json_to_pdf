@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>утилизация отходов</title>
+    <style>
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Roboto'), local('Roboto-Regular'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxK.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 500;
+            src: local('Roboto Medium'), local('Roboto-Medium'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmEU9fBBc4.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 700;
+            src: local('Roboto Bold'), local('Roboto-Bold'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc4.woff2) format('woff2');
+        }
+        
+        body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            margin: 0;
+            padding: 30px;
+            color: #2a2a4a;
+            line-height: 1.5;
+            font-size: 12pt;
+        }
+        
+        .document {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: white;
+            position: relative;
+        }
+        
+        .document::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: #624deb;
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .document-header { 
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .document-title {
+            font-size: 20pt; 
+            font-weight: 700; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            color: #2a2a4a;
+            text-transform: uppercase;
+        }
+        
+        .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .info-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #624deb;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 400;
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 14pt;
+            font-weight: 500;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #2a2a4a;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0;
+        }
+        
+        thead tr { 
+            background-color: #f7f8fd;
+        }
+        
+        th { 
+            text-align: left; 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            font-weight: 500;
+            color: #624deb;
+        }
+        
+        td { 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fbfbfd;
+        }
+        
+        .additional-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f7f8fd;
+            border-radius: 8px;
+            border-left: 4px solid #624deb;
+        }
+        
+        .signature { 
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .signature-item {
+            flex: 1;
+            max-width: 45%;
+            min-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .signature-line {
+            margin-top: 50px;
+            border-top: 1px solid #2a2a4a;
+            position: relative;
+        }
+        
+        .signature-label {
+            position: absolute;
+            top: 5px;
+            left: 0;
+            font-size: 9pt;
+            color: #777;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+        }
+        
+        .qr-code { 
+            margin-top: 30px; 
+            text-align: right;
+            float: right;
+            width: 100px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100pt;
+            color: rgba(98, 77, 235, 0.03);
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="watermark">утилизация</div>
+        
+        <div class="document-header">
+            <div class="document-title">
+                
+                    АКТ УТИЛИЗАЦИИ ОТХОДОВ
+                
+            </div>
+            
+            <div class="document-info">
+                <div class="info-group">
+                    <span class="info-label">Номер документа:</span>
+                    <span class="info-value">УТ-2023/087</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Дата составления:</span>
+                    <span class="info-value">23.06.2023</span>
+                </div>
+                
+                
+                <div class="info-group">
+                    <span class="info-label">Место составления:</span>
+                    <span class="info-value">г. Подольск</span>
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="section-title">Информация об организации</div>
+        <div class="document-info">
+            
+            <div class="info-group">
+                <span class="info-label">Организация:</span>
+                <span class="info-value">ЗАО &#34;ЭкоПолигон&#34;</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">Адрес:</span>
+                <span class="info-value">142100, Московская обл., г. Подольск, ул. Промышленная, д. 5</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">ИНН:</span>
+                <span class="info-value">5036123456</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">КПП:</span>
+                <span class="info-value">503601001</span>
+            </div>
+            
+        </div>
+        
+        
+        
+        <div class="document-info">
+            
+            <div class="info-group">
+                <span class="info-label">Контактное лицо:</span>
+                <span class="info-value">Смирнов Алексей Николаевич</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">Телефон:</span>
+                <span class="info-value">+7 (496) 234-56-78</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">Email:</span>
+                <span class="info-value">info@ecopoligon.ru</span>
+            </div>
+            
+        </div>
+        
+        
+        
+        <div class="section-title">Информация о утилизация</div>
+        <div class="document-info">
+            
+            <div class="info-group">
+                <span class="info-label">Дата утилизация:</span>
+                <span class="info-value">20.06.2023 - 22.06.2023</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">Место утилизация:</span>
+                <span class="info-value">Полигон ЗАО &#34;ЭкоПолигон&#34;, участок №3</span>
+            </div>
+            
+            
+            
+            <div class="info-group">
+                <span class="info-label">Метод утилизация:</span>
+                <span class="info-value">Термическая обработка с извлечением полезных компонентов</span>
+            </div>
+            
+        </div>
+        
+        
+        <div class="section-title">Сведения об отходах</div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 5%">№</th>
+                    <th style="width: 45%">Наименование</th>
+                    <th style="width: 15%">Класс опасности</th>
+                    <th style="width: 15%">Код ФККО</th>
+                    <th style="width: 15%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>1</td>
+                    <td>Отходы минеральных масел моторных</td>
+                    <td>III</td>
+                    <td>4 06 110 01 31 3</td>
+                    <td>250</td>
+                </tr>
+                
+                <tr>
+                    <td>2</td>
+                    <td>Отходы синтетических и полусинтетических масел моторных</td>
+                    <td>III</td>
+                    <td>4 13 100 01 31 3</td>
+                    <td>180</td>
+                </tr>
+                
+                <tr>
+                    <td>3</td>
+                    <td>Фильтры очистки масла автотранспортных средств отработанные</td>
+                    <td>III</td>
+                    <td>9 21 302 01 52 3</td>
+                    <td>75</td>
+                </tr>
+                
+                
+                <tr>
+                    <td colspan="4" style="text-align: right; font-weight: 500;">Итого:</td>
+                    <td style="font-weight: 500;">505</td>
+                </tr>
+                
+            </tbody>
+        </table>
+        
+        
+        <!-- Дополнительные таблицы, специфичные для типа операции -->
+        
+        <div class="section-title">Результаты утилизации</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%">Наименование продукта утилизации</th>
+                    <th style="width: 30%">Дальнейшее использование</th>
+                    <th style="width: 20%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>Топливо жидкое вторичное</td>
+                    <td>Для технологических нужд предприятия</td>
+                    <td>320</td>
+                </tr>
+                
+                <tr>
+                    <td>Металлолом</td>
+                    <td>Передача на металлургическое предприятие</td>
+                    <td>65</td>
+                </tr>
+                
+                <tr>
+                    <td>Углеродистый остаток</td>
+                    <td>Использование в производстве строительных материалов</td>
+                    <td>45</td>
+                </tr>
+                
+            </tbody>
+        </table>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        <div class="additional-info">
+            <p>Утилизация отходов проведена с соблюдением требований ФЗ № 89 «Об отходах производства и потребления» и нормативов воздействия на окружающую среду. Эффективность утилизации составила 85%.</p>
+        </div>
+        
+        
+        
+        <div class="signature">
+            <div class="signature-row">
+                
+                <div class="signature-item">
+                    <div class="info-label">Ответственное лицо:</div>
+                    <div class="info-value">Федоров И.С., главный технолог</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+                
+                
+                
+                <div class="signature-item">
+                    <div class="info-label">Представитель организации:</div>
+                    <div class="info-value">Морозова Е.П., инженер-эколог</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        
+        
+        <div style="clear: both;"></div>
+        
+        <div class="footer">
+            Документ сгенерирован автоматически • УТ-2023/087 • 23.06.2023
+        </div>
+    </div>
+</body>
+</html> 
