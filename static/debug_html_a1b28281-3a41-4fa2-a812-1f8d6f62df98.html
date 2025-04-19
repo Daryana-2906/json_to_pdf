@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Акт приёма-передачи отходов</title>
+    <!-- Встроенные шрифты для корректного отображения в PDF -->
+    <style>
+        /* Встраивание шрифта Roboto */
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Roboto'), local('Roboto-Regular'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxK.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 500;
+            src: local('Roboto Medium'), local('Roboto-Medium'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmEU9fBBc4.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 700;
+            src: local('Roboto Bold'), local('Roboto-Bold'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc4.woff2) format('woff2');
+        }
+        
+        body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            margin: 30px;
+            color: #2a2a4a;
+            line-height: 1.5;
+            font-size: 12pt;
+        }
+        
+        .document {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: white;
+            position: relative;
+        }
+        
+        .document::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: #624deb;
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .document-header { 
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .document-title {
+            font-size: 20pt; 
+            font-weight: 700; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            color: #2a2a4a;
+        }
+        
+        .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .info-group {
+            flex: 1;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #624deb;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 400;
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 14pt;
+            font-weight: 500;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #2a2a4a;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0;
+        }
+        
+        thead tr { 
+            background-color: #f7f8fd;
+        }
+        
+        th { 
+            text-align: left; 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            font-weight: 500;
+            color: #624deb;
+        }
+        
+        td { 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fbfbfd;
+        }
+        
+        .signature { 
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .signature-item {
+            flex: 1;
+            max-width: 45%;
+        }
+        
+        .signature-line {
+            margin-top: 50px;
+            border-top: 1px solid #2a2a4a;
+            position: relative;
+        }
+        
+        .signature-label {
+            position: absolute;
+            top: 5px;
+            left: 0;
+            font-size: 9pt;
+            color: #777;
+        }
+        
+        .qr-code { 
+            margin-top: 30px; 
+            text-align: right;
+            float: right;
+            width: 100px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100pt;
+            color: rgba(98, 77, 235, 0.03);
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="watermark">УТВЕРЖДЕНО</div>
+        
+        <div class="document-header">
+            <div class="document-title">АКТ ПРИЁМА-ПЕРЕДАЧИ ОТХОДОВ</div>
+            
+            <div class="document-info">
+                <div class="info-group">
+                    <span class="info-label">Номер документа:</span>
+                    <span class="info-value">ACT-001</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Дата составления:</span>
+                    <span class="info-value">2025-04-19</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-title">Сведения об отходах</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%">Наименование</th>
+                    <th style="width: 25%">Класс опасности</th>
+                    <th style="width: 25%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                    
+                    <tr>
+                        <td>Ртутьсодержащие лампы</td>
+                        <td>I</td>
+                        <td>10</td>
+                    </tr>
+                    
+                    <tr>
+                        <td>Аккумуляторы</td>
+                        <td>II</td>
+                        <td>50</td>
+                    </tr>
+                    
+                
+            </tbody>
+        </table>
+        
+        
+        <div class="signature">
+            <div class="signature-row">
+                <div class="signature-item">
+                    <div class="info-label">Принимающая сторона:</div>
+                    <div class="info-value">Иванов И.И.</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+                
+                <div class="signature-item">
+                    <div class="info-label">Передающая сторона:</div>
+                    <div class="info-value">_________________________</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+        <div class="qr-code">
+            <img src="data:image/png;base64,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" alt="QR код для проверки">
+        </div>
+        
+        
+        <div style="clear: both;"></div>
+        
+        <div class="footer">
+            Документ сгенерирован автоматически • ACT-001 • 2025-04-19
+        </div>
+    </div>
+</body>
+</html>

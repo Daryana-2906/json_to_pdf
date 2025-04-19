@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результат генерации PDF</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #624deb;
+            --secondary-color: #6e57ff;
+            --accent-color: #ff7b6b;
+            --dark-color: #2a2a4a;
+            --light-color: #f8f9fe;
+            --success-color: #41d7a7;
+            --error-color: #ff7b6b;
+            --text-color: #333344;
+            --card-shadow: 0 8px 30px rgba(98, 77, 235, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #e3e7ff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-color);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            position: relative;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .app-header {
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            padding: 25px 30px;
+            color: white;
+            position: relative;
+        }
+        
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M139.5,46.5 C161.5,69.1 172,104.8 158.5,131.5 C145,158.2 107.5,176 72.1,172.3 C36.7,168.6 3.4,143.4 0.6,112.4 C-2.2,81.4 25.6,44.8 58.6,26.2 C91.6,7.6 129.8,7 154.4,21.2 C179.1,35.4 190.3,64.4 176.4,87.3 C162.5,110.2 123.5,127 93.5,121.5 C75.8,118.2 67,99.5 76.5,87.3 C86,75.1 113.8,69.5 126.4,81.2 C139,93 136.4,122.1 115.9,135.6" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/></svg>') no-repeat center center;
+            background-size: cover;
+            opacity: 0.3;
+        }
+        
+        h1 {
+            font-weight: 600;
+            font-size: 28px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .subtitle {
+            font-weight: 300;
+            font-size: 16px;
+            opacity: 0.85;
+        }
+        
+        .app-body {
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .result-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .success .result-icon {
+            color: var(--success-color);
+        }
+        
+        .error .result-icon {
+            color: var(--error-color);
+        }
+        
+        .result-message {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .success .result-message {
+            color: var(--success-color);
+        }
+        
+        .error .result-message {
+            color: var(--error-color);
+        }
+        
+        .result-details {
+            font-size: 14px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-bottom: 30px;
+        }
+        
+        .document-id {
+            background-color: var(--light-color);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            color: var(--dark-color);
+            margin: 15px 0 25px;
+            display: inline-block;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(98, 77, 235, 0.3);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-bottom: 15px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(98, 77, 235, 0.4);
+        }
+        
+        .btn i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .btn-back {
+            background: transparent;
+            color: var(--text-color);
+            box-shadow: none;
+            opacity: 0.7;
+        }
+        
+        .btn-back:hover {
+            background: var(--light-color);
+            box-shadow: none;
+            opacity: 1;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* PDF loading animation */
+        .pdf-loading {
+            background-color: var(--light-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0 25px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .pdf-loading-animation {
+            display: inline-block;
+            position: relative;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .pdf-loading-animation div {
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        
+        .pdf-loading-animation div:nth-child(1) {
+            left: 6px;
+            animation: pdf-loading1 0.6s infinite;
+        }
+        
+        .pdf-loading-animation div:nth-child(2) {
+            left: 6px;
+            animation: pdf-loading2 0.6s infinite;
+        }
+        
+        .pdf-loading-animation div:nth-child(3) {
+            left: 26px;
+            animation: pdf-loading2 0.6s infinite;
+        }
+        
+        .pdf-loading-animation div:nth-child(4) {
+            left: 45px;
+            animation: pdf-loading3 0.6s infinite;
+        }
+        
+        @keyframes pdf-loading1 {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes pdf-loading2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(19px, 0); }
+        }
+        
+        @keyframes pdf-loading3 {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+        
+        .pdf-loading-text {
+            font-size: 14px;
+            color: var(--dark-color);
+        }
+        
+        .pdf-container {
+            display: none;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .pdf-preview {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        /* Responsive height for mobile */
+        @media (max-width: 768px) {
+            .pdf-preview {
+                height: 400px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .pdf-preview {
+                height: 300px;
+            }
+            
+            .pdf-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .pdf-actions .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+        
+        .pdf-preview.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .pdf-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+            transition-delay: 0.3s;
+        }
+        
+        .pdf-actions.loaded {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Document info card styles */
+        .document-info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 350px;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+            animation: floatAnimation 3s ease-in-out infinite;
+        }
+        
+        .document-info-card:hover {
+            box-shadow: 0 8px 25px rgba(98, 77, 235, 0.2);
+        }
+        
+        .document-info-header {
+            padding: 15px;
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .document-info-icon {
+            width: 32px;
+            height: 32px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        
+        .document-info-type {
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .document-info-body {
+            padding: 15px;
+        }
+        
+        .document-info-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .document-info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .document-info-label {
+            font-size: 14px;
+            color: #777;
+            display: flex;
+            align-items: center;
+        }
+        
+        .document-info-label i {
+            margin-right: 8px;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+        
+        .document-info-value {
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+        
+        @keyframes floatAnimation {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .mobile-warning {
+            display: none;
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #856404;
+        }
+        
+        @media (max-width: 480px) {
+            .mobile-warning {
+                display: block;
+            }
+        }
+        
+        .view-method-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(98, 77, 235, 0.7);
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 15px;
+            backdrop-filter: blur(2px);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .pdf-preview:hover .view-method-badge {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <h1>Результат генерации PDF</h1>
+            <p class="subtitle">Статус вашего документа</p>
+        </div>
+        
+        <div class="app-body">
+            {% if error %}
+            <div class="error">
+                <div class="result-icon">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="result-message">Произошла ошибка</div>
+                <div class="result-details">{{ error }}</div>
+            </div>
+            {% else %}
+            <div class="success">
+                <div class="result-icon">
+                    <i class="fas fa-check-circle pulse"></i>
+                </div>
+                <div class="result-message">PDF успешно сгенерирован!</div>
+                <div class="result-details">Ваш документ готов к скачиванию.</div>
+                
+                {% if document_meta %}
+                <div class="document-info-card">
+                    <div class="document-info-header">
+                        <div class="document-info-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="document-info-type">
+                            {{ document_meta.template_type|capitalize }} № {{ document_meta.number }}
+                        </div>
+                    </div>
+                    <div class="document-info-body">
+                        <div class="document-info-item">
+                            <div class="document-info-label"><i class="fas fa-calendar-alt"></i> Дата:</div>
+                            <div class="document-info-value">{{ document_meta.created_at }}</div>
+                        </div>
+                        <div class="document-info-item">
+                            <div class="document-info-label"><i class="fas fa-weight"></i> Размер:</div>
+                            <div class="document-info-value">{{ document_meta.size_kb }} КБ</div>
+                        </div>
+                        <div class="document-info-item">
+                            <div class="document-info-label"><i class="fas fa-file-invoice"></i> Страниц:</div>
+                            <div class="document-info-value">{{ document_meta.pages }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="document-id">
+                    <i class="fas fa-fingerprint"></i> ID: {{ document_id }}
+                </div>
+                {% endif %}
+                
+                <div id="pdf-loading" class="pdf-loading">
+                    <div class="pdf-loading-animation">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                    <div class="pdf-loading-text">Загрузка PDF файла...</div>
+                </div>
+                
+                <div id="pdf-container" class="pdf-container">
+                    <div class="mobile-warning">
+                        <i class="fas fa-info-circle"></i> На мобильном устройстве PDF может отображаться некорректно. Рекомендуем скачать или открыть в новой вкладке.
+                    </div>
+                    
+                    <div class="pdf-preview" id="pdf-preview">
+                        <span class="view-method-badge" id="view-method-badge">Метод: iframe</span>
+                        
+                        <!-- Первый метод: через iframe с URL -->
+                        <iframe 
+                            src="{{ pdf_url }}#toolbar=1&navpanes=1&scrollbar=1&view=FitH" 
+                            width="100%" 
+                            height="100%" 
+                            frameborder="0"
+                            id="pdf-iframe"
+                            onload="pdfLoaded()"
+                            style="display: block;"
+                        ></iframe>
+                        
+                        <!-- Альтернативный метод: через object -->
+                        <object 
+                            id="pdf-object"
+                            data="{{ pdf_url }}" 
+                            type="application/pdf" 
+                            width="100%" 
+                            height="100%"
+                            style="display: none;"
+                        >
+                            <!-- Fallback для браузеров, которые не поддерживают object -->
+                            <div style="padding: 20px; text-align: center;">
+                                <p>Браузер не может отобразить PDF напрямую.</p>
+                                <a href="{{ pdf_url }}" download class="btn">
+                                    <i class="fas fa-download"></i> Скачать PDF файл
+                                </a>
+                            </div>
+                        </object>
+                        
+                        <!-- Метод с использованием PDF.js -->
+                        <div id="pdf-js-viewer" style="width: 100%; height: 100%; display: none;">
+                            <div id="pdf-js-container" style="width: 100%; height: 100%;"></div>
+                        </div>
+                        
+                        <!-- Резервный метод: через base64 data URI (для небольших файлов) -->
+                        {% if pdf_data_uri %}
+                        <embed 
+                            id="pdf-embed"
+                            src="{{ pdf_data_uri }}" 
+                            type="application/pdf"
+                            width="100%" 
+                            height="100%"
+                            style="display: none;"
+                        />
+                        {% endif %}
+                    </div>
+                    
+                    <div class="pdf-actions" id="pdf-actions">
+                        <a href="{{ pdf_url }}" download class="btn" id="download-btn">
+                            <i class="fas fa-file-download"></i> Скачать PDF
+                        </a>
+                        <a href="{{ pdf_url }}" target="_blank" class="btn">
+                            <i class="fas fa-external-link-alt"></i> Открыть в новой вкладке
+                        </a>
+                        <button onclick="switchViewMethod()" class="btn btn-back" id="switch-btn">
+                            <i class="fas fa-sync-alt"></i> Сменить режим просмотра
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <a href="/" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Вернуться на главную
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Глобальные переменные
+        let currentViewMode = 0;
+        const viewModes = ['iframe', 'object', 'js-viewer', 'embed'];
+        const pdfUrl = "{{ pdf_url }}";
+        const hasPdfDataUri = "{{ pdf_data_uri|default('') }}" !== "";
+        
+        // Инициализация PDF.js
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        // Функция для загрузки PDF через PDF.js
+        function initPDFJS() {
+            if (!pdfUrl) return;
+            
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            loadingTask.promise.then(function(pdf) {
+                // Получаем первую страницу
+                pdf.getPage(1).then(function(page) {
+                    const container = document.getElementById('pdf-js-container');
+                    const scale = 1.2;
+                    const viewport = page.getViewport({ scale: scale });
+                    
+                    // Canvas для рендеринга PDF
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    container.appendChild(canvas);
+                    
+                    // Рендеринг PDF
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+                });
+            }, function(error) {
+                console.error('Ошибка при загрузке PDF:', error);
+                // Если ошибка - переключаемся на следующий метод
+                switchViewMethod();
+            });
+        }
+        
+        // Show download button after simulated loading
+        window.onload = function() {
+            setTimeout(function() {
+                document.getElementById('pdf-loading').style.display = 'none';
+                document.getElementById('pdf-container').style.display = 'block';
+                
+                // Инициализируем PDF.js
+                if (pdfUrl) {
+                    initPDFJS();
+                }
+                
+                // Add animation to the download button
+                const downloadBtn = document.getElementById('download-btn');
+                downloadBtn.classList.add('pulse');
+                setTimeout(() => {
+                    downloadBtn.classList.remove('pulse');
+                }, 2000);
+            }, 1800); // Show loading for 1.8 seconds
+        };
+        
+        // When PDF iframe is loaded
+        function pdfLoaded() {
+            // Delay to ensure the iframe content is properly loaded
+            setTimeout(function() {
+                document.getElementById('pdf-preview').classList.add('loaded');
+                document.getElementById('pdf-actions').classList.add('loaded');
+            }, 500);
+        }
+        
+        // Переключение между методами отображения PDF
+        function switchViewMethod() {
+            // Скрываем текущий метод
+            if (viewModes[currentViewMode] === 'js-viewer') {
+                document.getElementById('pdf-js-viewer').style.display = 'none';
+            } else {
+                const currentElement = document.getElementById(`pdf-${viewModes[currentViewMode]}`);
+                if (currentElement) currentElement.style.display = 'none';
+            }
+            
+            // Переход к следующему методу
+            currentViewMode = (currentViewMode + 1) % viewModes.length;
+            
+            // Обновляем текст метода просмотра
+            const viewMethodNames = {
+                'iframe': 'iframe',
+                'object': 'object',
+                'js-viewer': 'PDF.js',
+                'embed': 'embed (base64)'
+            };
+            document.getElementById('view-method-badge').innerText = 
+                `Метод: ${viewMethodNames[viewModes[currentViewMode]]}`;
+            
+            // Показываем новый метод
+            if (viewModes[currentViewMode] === 'js-viewer') {
+                document.getElementById('pdf-js-viewer').style.display = 'block';
+            } else {
+                const nextElement = document.getElementById(`pdf-${viewModes[currentViewMode]}`);
+                if (nextElement) {
+                    nextElement.style.display = 'block';
+                } else {
+                    // Если элемент не найден, возвращаемся к iframe
+                    currentViewMode = 0;
+                    document.getElementById(`pdf-${viewModes[currentViewMode]}`).style.display = 'block';
+                    document.getElementById('view-method-badge').innerText = `Метод: ${viewMethodNames[viewModes[0]]}`;
+                }
+            }
+            
+            document.getElementById('switch-btn').querySelector('i').classList.add('fa-spin');
+            setTimeout(() => {
+                document.getElementById('switch-btn').querySelector('i').classList.remove('fa-spin');
+            }, 500);
+        }
+    </script>
+</body>
+</html>

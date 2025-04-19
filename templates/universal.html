@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ operation_type|default('Документ') }} отходов</title>
+    <style>
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 400;
+            src: local('Roboto'), local('Roboto-Regular'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxK.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 500;
+            src: local('Roboto Medium'), local('Roboto-Medium'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmEU9fBBc4.woff2) format('woff2');
+        }
+        
+        @font-face {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 700;
+            src: local('Roboto Bold'), local('Roboto-Bold'),
+                 url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc4.woff2) format('woff2');
+        }
+        
+        body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            margin: 0;
+            padding: 30px;
+            color: #2a2a4a;
+            line-height: 1.5;
+            font-size: 12pt;
+        }
+        
+        .document {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            background: white;
+            position: relative;
+        }
+        
+        .document::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: #624deb;
+            border-radius: 2px 2px 0 0;
+        }
+        
+        .document-header { 
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .document-title {
+            font-size: 20pt; 
+            font-weight: 700; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            color: #2a2a4a;
+            text-transform: uppercase;
+        }
+        
+        .document-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .info-group {
+            flex: 1;
+            min-width: 200px;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #624deb;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-weight: 400;
+            display: block;
+        }
+        
+        .section-title {
+            font-size: 14pt;
+            font-weight: 500;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #2a2a4a;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0;
+        }
+        
+        thead tr { 
+            background-color: #f7f8fd;
+        }
+        
+        th { 
+            text-align: left; 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            font-weight: 500;
+            color: #624deb;
+        }
+        
+        td { 
+            padding: 10px; 
+            border: 1px solid #e0e0e0;
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #fbfbfd;
+        }
+        
+        .additional-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f7f8fd;
+            border-radius: 8px;
+            border-left: 4px solid #624deb;
+        }
+        
+        .signature { 
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .signature-item {
+            flex: 1;
+            max-width: 45%;
+            min-width: 200px;
+            margin-bottom: 20px;
+        }
+        
+        .signature-line {
+            margin-top: 50px;
+            border-top: 1px solid #2a2a4a;
+            position: relative;
+        }
+        
+        .signature-label {
+            position: absolute;
+            top: 5px;
+            left: 0;
+            font-size: 9pt;
+            color: #777;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #999;
+        }
+        
+        .qr-code { 
+            margin-top: 30px; 
+            text-align: right;
+            float: right;
+            width: 100px;
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: auto;
+        }
+        
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 100pt;
+            color: rgba(98, 77, 235, 0.03);
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="document">
+        <div class="watermark">{{ operation_type|default('') }}</div>
+        
+        <div class="document-header">
+            <div class="document-title">
+                {% if operation_type == "доставка" %}
+                    АКТ ДОСТАВКИ ОТХОДОВ
+                {% elif operation_type == "утилизация" %}
+                    АКТ УТИЛИЗАЦИИ ОТХОДОВ
+                {% elif operation_type == "переработка" %}
+                    АКТ ПЕРЕРАБОТКИ ОТХОДОВ
+                {% elif operation_type == "образование" %}
+                    ОТЧЕТ ОБ ОБРАЗОВАНИИ ОТХОДОВ
+                {% elif operation_type == "накопление" %}
+                    АКТ НАКОПЛЕНИЯ ОТХОДОВ
+                {% elif operation_type == "обезвреживание" %}
+                    АКТ ОБЕЗВРЕЖИВАНИЯ ОТХОДОВ
+                {% else %}
+                    ДОКУМЕНТ ПО ОБРАЩЕНИЮ С ОТХОДАМИ
+                {% endif %}
+            </div>
+            
+            <div class="document-info">
+                <div class="info-group">
+                    <span class="info-label">Номер документа:</span>
+                    <span class="info-value">{{ document_number|default('') }}</span>
+                </div>
+                
+                <div class="info-group">
+                    <span class="info-label">Дата составления:</span>
+                    <span class="info-value">{{ date|default('') }}</span>
+                </div>
+                
+                {% if location %}
+                <div class="info-group">
+                    <span class="info-label">Место составления:</span>
+                    <span class="info-value">{{ location|default('') }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if organization or address %}
+        <div class="section-title">Информация об организации</div>
+        <div class="document-info">
+            {% if organization %}
+            <div class="info-group">
+                <span class="info-label">Организация:</span>
+                <span class="info-value">{{ organization|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if address %}
+            <div class="info-group">
+                <span class="info-label">Адрес:</span>
+                <span class="info-value">{{ address|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if inn %}
+            <div class="info-group">
+                <span class="info-label">ИНН:</span>
+                <span class="info-value">{{ inn|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if kpp %}
+            <div class="info-group">
+                <span class="info-label">КПП:</span>
+                <span class="info-value">{{ kpp|default('') }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if contact_person or phone %}
+        <div class="document-info">
+            {% if contact_person %}
+            <div class="info-group">
+                <span class="info-label">Контактное лицо:</span>
+                <span class="info-value">{{ contact_person|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if phone %}
+            <div class="info-group">
+                <span class="info-label">Телефон:</span>
+                <span class="info-value">{{ phone|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if email %}
+            <div class="info-group">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ email|default('') }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if operation_date or operation_location %}
+        <div class="section-title">Информация о {{ operation_type|default('операции') }}</div>
+        <div class="document-info">
+            {% if operation_date %}
+            <div class="info-group">
+                <span class="info-label">Дата {{ operation_type|default('операции') }}:</span>
+                <span class="info-value">{{ operation_date|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if operation_location %}
+            <div class="info-group">
+                <span class="info-label">Место {{ operation_type|default('операции') }}:</span>
+                <span class="info-value">{{ operation_location|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if operation_method %}
+            <div class="info-group">
+                <span class="info-label">Метод {{ operation_type|default('операции') }}:</span>
+                <span class="info-value">{{ operation_method|default('') }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="section-title">Сведения об отходах</div>
+        {% if wastes %}
+        <table>
+            <thead>
+                <tr>
+                    {% if show_number %}<th style="width: 5%">№</th>{% endif %}
+                    <th style="width: {% if show_number %}45{% else %}50{% endif %}%">Наименование</th>
+                    <th style="width: 15%">Класс опасности</th>
+                    <th style="width: 15%">Код ФККО</th>
+                    <th style="width: 15%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for waste in wastes %}
+                <tr>
+                    {% if show_number %}<td>{{ loop.index }}</td>{% endif %}
+                    <td>{{ waste.name|default('') }}</td>
+                    <td>{{ waste.hazard_class|default('') }}</td>
+                    <td>{{ waste.fkko_code|default('') }}</td>
+                    <td>{{ waste.quantity|default('') }}</td>
+                </tr>
+                {% endfor %}
+                {% if show_total %}
+                <tr>
+                    <td colspan="{% if show_number %}4{% else %}3{% endif %}" style="text-align: right; font-weight: 500;">Итого:</td>
+                    <td style="font-weight: 500;">{{ total_quantity|default('') }}</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; color: #777; padding: 20px 0;">Нет данных об отходах</p>
+        {% endif %}
+        
+        <!-- Дополнительные таблицы, специфичные для типа операции -->
+        {% if operation_type == "утилизация" and utilization_results %}
+        <div class="section-title">Результаты утилизации</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%">Наименование продукта утилизации</th>
+                    <th style="width: 30%">Дальнейшее использование</th>
+                    <th style="width: 20%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in utilization_results %}
+                <tr>
+                    <td>{{ result.name|default('') }}</td>
+                    <td>{{ result.usage|default('') }}</td>
+                    <td>{{ result.quantity|default('') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if operation_type == "переработка" and processing_results %}
+        <div class="section-title">Результаты переработки</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%">Наименование продукта переработки</th>
+                    <th style="width: 30%">Характеристики</th>
+                    <th style="width: 20%">Количество (кг)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in processing_results %}
+                <tr>
+                    <td>{{ result.name|default('') }}</td>
+                    <td>{{ result.characteristics|default('') }}</td>
+                    <td>{{ result.quantity|default('') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if operation_type == "доставка" and transport_info %}
+        <div class="section-title">Информация о транспортировке</div>
+        <div class="document-info">
+            {% if transport_info.vehicle_type %}
+            <div class="info-group">
+                <span class="info-label">Тип транспортного средства:</span>
+                <span class="info-value">{{ transport_info.vehicle_type|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if transport_info.vehicle_number %}
+            <div class="info-group">
+                <span class="info-label">Номер транспортного средства:</span>
+                <span class="info-value">{{ transport_info.vehicle_number|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if transport_info.driver %}
+            <div class="info-group">
+                <span class="info-label">Водитель:</span>
+                <span class="info-value">{{ transport_info.driver|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if transport_info.route %}
+            <div class="info-group">
+                <span class="info-label">Маршрут:</span>
+                <span class="info-value">{{ transport_info.route|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if transport_info.departure_date %}
+            <div class="info-group">
+                <span class="info-label">Дата отправления:</span>
+                <span class="info-value">{{ transport_info.departure_date|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if transport_info.arrival_date %}
+            <div class="info-group">
+                <span class="info-label">Дата прибытия:</span>
+                <span class="info-value">{{ transport_info.arrival_date|default('') }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if operation_type == "образование" and source_info %}
+        <div class="section-title">Источники образования отходов</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50%">Производственный процесс</th>
+                    <th style="width: 30%">Место образования</th>
+                    <th style="width: 20%">Период</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for source in source_info %}
+                <tr>
+                    <td>{{ source.process|default('') }}</td>
+                    <td>{{ source.location|default('') }}</td>
+                    <td>{{ source.period|default('') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if operation_type == "накопление" and storage_info %}
+        <div class="section-title">Информация о накоплении</div>
+        <div class="document-info">
+            {% if storage_info.storage_type %}
+            <div class="info-group">
+                <span class="info-label">Тип места накопления:</span>
+                <span class="info-value">{{ storage_info.storage_type|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if storage_info.storage_capacity %}
+            <div class="info-group">
+                <span class="info-label">Вместимость:</span>
+                <span class="info-value">{{ storage_info.storage_capacity|default('') }}</span>
+            </div>
+            {% endif %}
+            
+            {% if storage_info.storage_period %}
+            <div class="info-group">
+                <span class="info-label">Период накопления:</span>
+                <span class="info-value">{{ storage_info.storage_period|default('') }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if operation_type == "обезвреживание" and neutralization_methods %}
+        <div class="section-title">Методы обезвреживания</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40%">Наименование отхода</th>
+                    <th style="width: 40%">Метод обезвреживания</th>
+                    <th style="width: 20%">Эффективность</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for method in neutralization_methods %}
+                <tr>
+                    <td>{{ method.waste_name|default('') }}</td>
+                    <td>{{ method.method_name|default('') }}</td>
+                    <td>{{ method.efficiency|default('') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        {% if additional_text %}
+        <div class="additional-info">
+            <p>{{ additional_text|default('') }}</p>
+        </div>
+        {% endif %}
+        
+        {% if responsible_person or company_representative %}
+        <div class="signature">
+            <div class="signature-row">
+                {% if responsible_person %}
+                <div class="signature-item">
+                    <div class="info-label">Ответственное лицо:</div>
+                    <div class="info-value">{{ responsible_person|default('') }}</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if company_representative %}
+                <div class="signature-item">
+                    <div class="info-label">Представитель организации:</div>
+                    <div class="info-value">{{ company_representative|default('') }}</div>
+                    <div class="signature-line">
+                        <span class="signature-label">подпись</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if qr_code %}
+        <div class="qr-code">
+            <img src="{{ qr_code }}" alt="QR код для проверки">
+        </div>
+        {% endif %}
+        
+        <div style="clear: both;"></div>
+        
+        <div class="footer">
+            Документ сгенерирован автоматически • {{ document_number|default('') }} • {{ date|default('') }}
+        </div>
+    </div>
+</body>
+</html> 

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генерация PDF</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #624deb;
+            --secondary-color: #6e57ff;
+            --accent-color: #ff7b6b;
+            --dark-color: #2a2a4a;
+            --light-color: #f8f9fe;
+            --success-color: #41d7a7;
+            --text-color: #333344;
+            --card-shadow: 0 8px 30px rgba(98, 77, 235, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7ff 0%, #e3e7ff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-color);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .app-header {
+            background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+            padding: 25px 30px;
+            color: white;
+            position: relative;
+        }
+        
+        .app-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path d="M139.5,46.5 C161.5,69.1 172,104.8 158.5,131.5 C145,158.2 107.5,176 72.1,172.3 C36.7,168.6 3.4,143.4 0.6,112.4 C-2.2,81.4 25.6,44.8 58.6,26.2 C91.6,7.6 129.8,7 154.4,21.2 C179.1,35.4 190.3,64.4 176.4,87.3 C162.5,110.2 123.5,127 93.5,121.5 C75.8,118.2 67,99.5 76.5,87.3 C86,75.1 113.8,69.5 126.4,81.2 C139,93 136.4,122.1 115.9,135.6" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="8"/></svg>') no-repeat center center;
+            background-size: cover;
+            opacity: 0.3;
+        }
+        
+        h1 {
+            font-weight: 600;
+            font-size: 28px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .subtitle {
+            font-weight: 300;
+            font-size: 16px;
+            opacity: 0.85;
+        }
+        
+        .app-body {
+            padding: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 15px;
+            color: var(--dark-color);
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 1px solid #e1e5f1;
+            background-color: #f9faff;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            resize: none;
+            color: var(--dark-color);
+            transition: all 0.3s ease;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(98, 77, 235, 0.15);
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(98, 77, 235, 0.3);
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(98, 77, 235, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .example-section {
+            margin-top: 30px;
+            background-color: var(--light-color);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .example-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .example-title i {
+            margin-right: 8px;
+            color: var(--primary-color);
+        }
+        
+        pre {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            overflow: auto;
+            font-size: 13px;
+            color: var(--dark-color);
+            border: 1px solid #e1e5f1;
+        }
+        
+        .error-message {
+            color: var(--accent-color);
+            margin-top: 8px;
+            font-size: 14px;
+            display: none;
+            padding: 8px 12px;
+            background-color: rgba(255, 123, 107, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #e1e5f1;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .copy-btn i {
+            margin-right: 6px;
+        }
+        
+        .template-selector {
+            display: flex;
+            margin-bottom: 25px;
+            background-color: var(--light-color);
+            border-radius: 30px;
+            padding: 5px;
+            width: fit-content;
+        }
+        
+        .template-option {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .template-option.active {
+            background-color: white;
+            color: var(--primary-color);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .container {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        /* Loading animation styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(42, 42, 74, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-container {
+            background-color: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            max-width: 350px;
+            width: 90%;
+            transform: translateY(20px);
+            transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+            animation: fadeInUp 0.5s forwards;
+        }
+        
+        .loading-overlay.visible .loading-container {
+            transform: translateY(0);
+        }
+        
+        .loading-spinner {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+        }
+        
+        .loading-spinner::before,
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            opacity: 0.6;
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        .loading-spinner::after {
+            background: white;
+            transform: scale(0.33);
+            animation-delay: -0.5s;
+        }
+        
+        .loading-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--primary-color);
+            font-size: 30px;
+            animation: spin 3s ease infinite;
+        }
+        
+        .loading-message {
+            color: var(--dark-color);
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .loading-sub-message {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .loading-progress {
+            width: 100%;
+            height: 5px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+            border-radius: 5px;
+            transition: width 0.5s ease;
+            animation: loadingProgress 4s ease infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.33);
+            }
+            80%, 100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes spin {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+        
+        @keyframes loadingProgress {
+            0% {
+                width: 15%;
+            }
+            50% {
+                width: 85%;
+            }
+            100% {
+                width: 95%;
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="app-header">
+            <h1>Генерация PDF-документа</h1>
+            <p class="subtitle">Создавайте профессиональные PDF-документы из JSON данных</p>
+        </div>
+        
+        <div class="app-body">
+            <div class="template-selector">
+                <div class="template-option active" onclick="selectTemplate('act')">Акт приема отходов</div>
+                <div class="template-option" onclick="selectTemplate('request')">Заявка на утилизацию</div>
+            </div>
+            
+            <form id="json-form" action="/generate" method="POST" onsubmit="return submitForm()">
+                <div class="input-group">
+                    <label for="json_input"><i class="fas fa-code"></i> JSON-данные для заполнения шаблона:</label>
+                    <textarea id="json_input" name="json_input" spellcheck="false" placeholder='Введите JSON данные...'></textarea>
+                    <div id="error-message" class="error-message"></div>
+                </div>
+                
+                <button type="submit" class="btn">
+                    <i class="fas fa-file-pdf"></i> Сгенерировать PDF
+                </button>
+            </form>
+            
+            <div class="example-section">
+                <div class="example-title">
+                    <i class="fas fa-lightbulb"></i> Пример JSON для текущего шаблона
+                </div>
+                <button id="copy-btn" class="copy-btn" onclick="copyExample()">
+                    <i class="fas fa-copy"></i> Копировать
+                </button>
+                <pre id="example-json">{{ example_json | tojson(indent=4) }}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-container">
+            <div class="loading-spinner">
+                <div class="loading-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+            </div>
+            <div class="loading-message">Генерация PDF...</div>
+            <div class="loading-sub-message">Создаем ваш документ, пожалуйста подождите</div>
+            <div class="loading-progress">
+                <div class="loading-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplate = 'act';
+        
+        // Образцы JSON для каждого шаблона
+        const templates = {
+            act: JSON.parse('{{ example_json | tojson }}'),
+            request: {
+                "template": "request.html",
+                "request_number": "REQ-001",
+                "date": "2025-04-19",
+                "organization": "ООО Экологика",
+                "address": "г. Москва, ул. Примерная, д. 123",
+                "wastes": [
+                    {"name": "Ртутьсодержащие лампы", "hazard_class": "I", "quantity": 10},
+                    {"name": "Аккумуляторы", "hazard_class": "II", "quantity": 50}
+                ],
+                "contact_person": "Петров П.П.",
+                "phone": "+7 (999) 123-45-67"
+            }
+        };
+        
+        // Устанавливаем начальное значение в поле ввода
+        document.getElementById('json_input').value = JSON.stringify(templates.act, null, 4);
+        
+        function selectTemplate(template) {
+            currentTemplate = template;
+            
+            // Обновляем внешний вид селектора
+            document.querySelectorAll('.template-option').forEach(el => {
+                el.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Обновляем пример JSON и поле ввода
+            document.getElementById('example-json').textContent = JSON.stringify(templates[template], null, 4);
+            document.getElementById('json_input').value = JSON.stringify(templates[template], null, 4);
+        }
+        
+        function submitForm() {
+            if (!validateForm()) {
+                return false;
+            }
+            
+            // Show loading animation
+            document.getElementById('loading-overlay').classList.add('visible');
+            
+            // Submit the form
+            return true;
+        }
+        
+        function validateForm() {
+            const jsonInput = document.getElementById('json_input').value.trim();
+            const errorMessage = document.getElementById('error-message');
+            
+            // Проверяем, пустой ли ввод
+            if (!jsonInput) {
+                showError('JSON не может быть пустым.');
+                return false;
+            }
+            
+            // Проверяем, валидный ли JSON
+            try {
+                JSON.parse(jsonInput);
+                hideError();
+                return true;
+            } catch (e) {
+                showError('Ошибка в JSON: ' + e.message);
+                return false;
+            }
+        }
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        function copyExample() {
+            const exampleText = document.getElementById('example-json').textContent;
+            navigator.clipboard.writeText(exampleText).then(() => {
+                const copyBtn = document.getElementById('copy-btn');
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Скопировано';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
