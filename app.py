@@ -5,7 +5,6 @@ import pdfkit
 import qrcode
 import io
 import base64
-from io import BytesIO
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify
 from werkzeug.utils import secure_filename
@@ -20,7 +19,7 @@ if not os.path.exists(STATIC_FOLDER):
     os.makedirs(STATIC_FOLDER)
 
 # Явно указываем путь к wkhtmltopdf
-wkhtmltopdf_path = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+wkhtmltopdf_path = "/usr/bin/wkhtmltopdf"
 config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
 
 # Проверяем наличие wkhtmltopdf
