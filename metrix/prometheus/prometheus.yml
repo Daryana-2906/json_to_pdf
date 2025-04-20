@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# Scrape Prometheus itself
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Конфигурация для скрапинга метрик приложения
+  - job_name: 'json-to-pdf-app'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['host.docker.internal:8000']  # Используем специальный DNS для доступа к хосту из контейнера
+    
+    # Настройка для обработки метрик Flask
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'json-to-pdf-app'
+
+# Правила алертов (можно добавить в будущем)
+# rule_files:
+#   - "alerts.yml" 
